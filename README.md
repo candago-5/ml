@@ -4,9 +4,9 @@
 
 ---
 
-![Repo Views](https://komarev.com/ghpvc/?username=candago-5&repo=backend&label=Views&color=blue&style=flat)
-![GitHub top language](https://img.shields.io/github/languages/top/candago-5/backend?style=flat&color=green)
-![GitHub last commit](https://img.shields.io/github/last-commit/candago-5/backend?color=yellow)
+![Repo Views](https://komarev.com/ghpvc/?username=candago-5&repo=ml&label=Views&color=blue&style=flat)
+![GitHub top language](https://img.shields.io/github/languages/top/candago-5/ml?style=flat&color=green)
+![GitHub last commit](https://img.shields.io/github/last-commit/candago-5/ml?color=yellow)
 
 
 ![TypeScript](https://img.shields.io/badge/-TypeScript-333333?style=flat&logo=typescript)
