@@ -1,6 +1,13 @@
 import kagglehub
 import tensorflow as tf
 from tensorflow import keras
+import os
+import xml.etree.ElementTree as ET
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import pathlib
+import numpy as np
+
 
 # Download latest version
 path = kagglehub.dataset_download("jessicali9530/stanford-dogs-dataset")
@@ -8,124 +15,89 @@ path = kagglehub.dataset_download("jessicali9530/stanford-dogs-dataset")
 print("Path to dataset files:", path)
 
 
-# Assuming your images are 28x28 pixels, if not, change the input shape accordingly
-# You'll need to determine the actual dimensions of your images from the dataset
-image_height = 28
-image_width = 28
-image_channels = 3 # For RGB images
+dataset_path = "/home/caiquefrd/.cache/kagglehub/datasets/jessicali9530/stanford-dogs-dataset/versions/2/images/Images"
+data_dir = pathlib.Path(dataset_path)
 
-model = keras.models.Sequential([
-    keras.layers.Conv2D(64, 7, activation="relu", padding="same", input_shape=[image_height, image_width, image_channels]),
-    keras.layers.MaxPooling2D(2),
-    keras.layers.Conv2D(128, 3, activation="relu", padding="same"),
-    keras.layers.Conv2D(128, 3, activation="relu", padding="same"),
-    keras.layers.MaxPooling2D(2),
-    keras.layers.Conv2D(256, 3, activation="relu", padding="same"),
-    keras.layers.Conv2D(256, 3, activation="relu", padding="same"),
-    keras.layers.MaxPooling2D(2),
-    keras.layers.Flatten(),
-    keras.layers.Dense(128, activation="relu"),
-    keras.layers.Dropout(0.5),
-    keras.layers.Dense(64, activation="relu"),
-    keras.layers.Dropout(0.5),
-    keras.layers.Dense(10, activation="softmax")
-])
+image_height = 240
+image_width = 240
+batch_size = 32
+image_channels = 3
 
-model.summary()
 
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-import os
+train_ds = tf.keras.utils.image_dataset_from_directory(
+    data_dir,
+    validation_split=0.2,  
+    subset="training",     
+    seed=123,
+    image_size=(image_height, image_width),
+    batch_size=batch_size
+)
 
-# Construct the path to an example image
-# You might need to adjust the specific path based on the actual directory structure
-# and the breed/image you want to display.
-image_path = os.path.join(path, 'images', 'Images', 'n02085620-Chihuahua', 'n02085620_10074.jpg') # Example path
 
-# Check if the file exists
-if os.path.exists(image_path):
-    # Load the image
-    img = mpimg.imread(image_path)
+val_ds = tf.keras.utils.image_dataset_from_directory(
+    data_dir,
+    validation_split=0.2,
+    subset="validation",   
+    seed=123,
+    image_size=(image_height, image_width),
+    batch_size=batch_size
+)
 
-    # Display the image
-    plt.imshow(img)
-    plt.axis('off') # Hide axis
-    plt.show()
+print("Classes found:", train_ds.class_names)
 
-    # Print the shape and data type of the image array
-    print("Image shape:", img.shape)
-    print("Image data type:", img.dtype)
 
-    # Split the image into R, G, and B channels
-    r_channel = img[:, :, 0]
-    g_channel = img[:, :, 1]
-    b_channel = img[:, :, 2]
 
-    print("\nShape of R channel:", r_channel.shape)
-    print("values of first R channel", r_channel[0] / 255)
-    print("Shape of G channel:", g_channel.shape)
-    print("Shape of B channel:", b_channel.shape)
+model_path = "dog_spotter_model.keras"
 
+if os.path.exists(model_path):
+    print("Loading saved model...")
+    model = keras.models.load_model(model_path)
 else:
-    print(f"Image not found at: {image_path}")
-    
-import os
-import xml.etree.ElementTree as ET
+    print("No saved model found. Training a new model...")
+    model = keras.models.Sequential([
+        keras.layers.Rescaling(1./255, input_shape=(image_height, image_width, 3)),
+        keras.layers.Conv2D(64, 7, activation="relu", padding="same"),
+        keras.layers.MaxPooling2D(2),
+        keras.layers.Conv2D(128, 3, activation="relu", padding="same"),
+        keras.layers.Conv2D(128, 3, activation="relu", padding="same"),
+        keras.layers.MaxPooling2D(2),
+        keras.layers.Conv2D(256, 3, activation="relu", padding="same"),
+        keras.layers.Conv2D(256, 3, activation="relu", padding="same"),
+        keras.layers.MaxPooling2D(2),
+        keras.layers.Flatten(),
+        keras.layers.Dense(128, activation="relu"),
+        keras.layers.Dropout(0.5),
+        keras.layers.Dense(64, activation="relu"),
+        keras.layers.Dropout(0.5),
+        keras.layers.Dense(120, activation="softmax")
+    ])
 
-# Get the dataset path from the output of the first cell
-dataset_path = path
-annotation_path = os.path.join(dataset_path, 'annotations', 'Annotation')
+    model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    model.fit(train_ds, validation_data=val_ds, epochs=10)
+    model.save(model_path)
+    print(f"Model saved to {model_path}")
 
-# List to store annotation data
-annotation_data = []
-xml_files = []
 
-# Walk through the directories and find XML files (they don't have .xml extension in this dataset)
-for root_dir, _, files in os.walk(annotation_path):
-    for file in files:
-        # Skip hidden files and directories
-        if not file.startswith('.'):
-            xml_files.append(os.path.join(root_dir, file))
+# --- Make a Prediction ---
 
-print(f"Found {len(xml_files)} XML annotation files.")
+# 1. Load a test image
+# You can change this to any image path
+test_image_path = f"{data_dir}/n02085620-Chihuahua/n02085620_1007.jpg"
+img = tf.keras.utils.load_img(
+    test_image_path, target_size=(image_height, image_width)
+)
 
-for file_path in xml_files:
-    try:
-        # Parse the XML file
-        tree = ET.parse(file_path)
-        root = tree.getroot()
+# 2. Preprocess the image
+img_array = tf.keras.utils.img_to_array(img)
+img_array = tf.expand_dims(img_array, 0)  # Create a batch
 
-        # Extract image size
-        size = root.find('size')
-        width = int(size.find('width').text)
-        height = int(size.find('height').text)
-        depth = int(size.find('depth').text)
+# 3. Make a prediction
+predictions = model.predict(img_array)
+score = tf.nn.softmax(predictions[0])
 
-        # Extract object information (assuming one object per annotation for now)
-        obj = root.find('object')
-        name = obj.find('name').text
-        bndbox = obj.find('bndbox')
-        xmin = int(bndbox.find('xmin').text)
-        ymin = int(bndbox.find('ymin').text)
-        xmax = int(bndbox.find('xmax').text)
-        ymax = int(bndbox.find('ymax').text)
+# 4. Decode and print the result
+class_names = train_ds.class_names
+predicted_class = class_names[np.argmax(score)]
+confidence = 100 * np.max(score)
 
-        # Store the extracted information
-        annotation_data.append({
-            'file_path': file_path,
-            'breed': name,
-            'width': width,
-            'height': height,
-            'depth': depth,
-            'xmin': xmin,
-            'ymin': ymin,
-            'xmax': xmax,
-            'ymax': ymax
-        })
-
-    except Exception as e:
-        print(f"Error processing file {file_path}: {e}")
-
-# Now you have the annotation data in the 'annotation_data' list
-# You can further process or analyze this data
-print(f"Successfully processed {len(annotation_data)} annotation files.")
+print(f"This image most likely belongs to {predicted_class} with a {confidence:.2f} percent confidence.")
