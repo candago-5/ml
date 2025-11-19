@@ -56,7 +56,7 @@ else:
 
     model.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'],jit_compile=True)
     print("Starting Training...")
-    history =model.fit(train_ds,validation_data=val_ds, epochs=150)
+    history = model.fit(train_ds,validation_data=val_ds, epochs=150)
     model.save(model_path)
     print(f"Model saved to {model_path}")
 
@@ -67,27 +67,3 @@ else:
     plt.xlabel('Epoch')
     plt.legend(['Train', 'Validation'], loc='upper left')
     plt.show()
-    
-# --- Make a Prediction ---
-
-# 1. Load a test image
-# You can change this to any image path
-test_image_path = f"{dataset_path}/n02085620-Chihuahua/n02085620_1007.jpg"
-img = tf.keras.utils.load_img(
-    test_image_path, target_size=(image_height, image_width)
-)
-
-# 2. Preprocess the image
-img_array = tf.keras.utils.img_to_array(img)
-img_array = tf.expand_dims(img_array, 0)  # Create a batch
-
-# 3. Make a prediction
-predictions = model.predict(img_array)
-score = tf.nn.softmax(predictions[0])
-
-# 4. Decode and print the result
-class_names = train_ds.class_names
-predicted_class = class_names[np.argmax(score)]
-confidence = 100 * np.max(score)
-
-print(f"This image most likely belongs to {predicted_class} with a {confidence:.2f} percent confidence.")
