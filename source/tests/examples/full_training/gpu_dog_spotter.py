@@ -28,7 +28,7 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
     image_size=(image_height, image_width), batch_size=batch_size
 )
 
-model_path = "dog_spotter_model.keras"
+model_path = "gpu_dog_spotter_model.keras"
 
 if os.path.exists(model_path):
     print("Loading saved model...")
@@ -56,7 +56,7 @@ else:
 
     model.compile(optimizer='adam',loss='sparse_categorical_crossentropy',metrics=['accuracy'],jit_compile=True)
     print("Starting Training...")
-    history = model.fit(train_ds,validation_data=val_ds, epochs=150)
+    history = model.fit(train_ds,validation_data=val_ds, epochs=500)
     model.save(model_path)
     print(f"Model saved to {model_path}")
 
@@ -67,3 +67,4 @@ else:
     plt.xlabel('Epoch')
     plt.legend(['Train', 'Validation'], loc='upper left')
     plt.show()
+
