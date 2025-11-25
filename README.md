@@ -1,4 +1,4 @@
-# Dog Finder ML
+# Dog Spotter ML
 
 Projeto de Machine Learning para identificação e classificação de raças de cães utilizando Deep Learning com TensorFlow/Keras.
 
