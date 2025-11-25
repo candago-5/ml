@@ -260,7 +260,7 @@ Este projeto faz parte do programa acadêmico da FATEC.
 
 ## 👥 Autores
 
-Desenvolvido como parte do projeto Dog Finder.
+Desenvolvido como parte do projeto Dog Spotter.
 
 ## 🙏 Agradecimentos
 
@@ -270,4 +270,4 @@ Desenvolvido como parte do projeto Dog Finder.
 
 ---
 
-**Branch atual:** `feature@mobineNetV2_model`
+**Branch atual:** `final`
