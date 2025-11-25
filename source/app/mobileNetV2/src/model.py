@@ -34,7 +34,6 @@ def predict():
         image_width = 240
         batch_size = 32
 
-
         train_ds = tf.keras.utils.image_dataset_from_directory(
             dataset_path, validation_split=0.2, subset="training", seed=123,
             image_size=(image_height, image_width), batch_size=batch_size
@@ -44,6 +43,7 @@ def predict():
             dataset_path, validation_split=0.2, subset="validation", seed=123,
             image_size=(image_height, image_width), batch_size=batch_size
         )
+
 
         model_path = "dog_spotter_model.keras"
 
