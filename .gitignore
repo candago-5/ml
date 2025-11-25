@@ -1,2 +1,5 @@
-venv
 utils.py
+venv/
+venv0/
+**/venv/
+**/venv0/
